@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  openresty:
+    container_name: openresty
+    image: openresty/openresty:buster
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./openresty/conf.d:/etc/nginx/conf.d
+      - ./openresty/waf:/usr/local/openresty/nginx/conf/waf
+      - ./openresty/certificates:/usr/local/openresty/nginx/ssl
+      - ./openresty/conf/vpn.conf:/usr/local/openresty/nginx/conf/vpn.conf
+      # htpasswd -bc htpasswd registry example
+      - ./openresty/conf/htpasswd:/usr/local/openresty/nginx/conf/htpasswd
+      - ./openresty/conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+    depends_on:
+      - registry
+    environment:
+      TZ: Asia/Shanghai
+    command: nginx -g "daemon off;"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.90"
+          memory: 1024M
+    networks:
+      openresty:
+      registry:
+
+  registry:
+    container_name: registry
+    restart: always
+    image: registry:2.8.3
+    volumes:
+      - registry:/var/lib/registry
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.90"
+          memory: 1024M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "3"
+    networks:
+      registry:
+
+networks:
+  openresty:
+    driver: bridge
+  registry:
+    driver: bridge
+
+volumes:
+  registry:
+    driver: local
+
+# 1.ln 证书 /opt/registry/certs/private.key；
+# 
+# 2.修改 containerd 配置；
+# /etc/containerd/config.toml
+# [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.local:443".tls]
+#   ca_file = "/etc/ssl/certs/registry.local.crt"

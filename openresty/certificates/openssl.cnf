@@ -1,0 +1,27 @@
+[ req ]
+default_bits        = 2048
+default_keyfile     = privkey.pem
+distinguished_name  = req_distinguished_name
+req_extensions      = req_ext
+x509_extensions     = v3_req
+prompt              = no
+
+[ req_distinguished_name ]
+countryName         = US
+stateOrProvinceName = CA
+localityName        = San
+organizationName    = Registry.local
+organizationalUnitName = Registry.local
+commonName          = registry.local
+
+[ req_ext ]
+subjectAltName      = @alt_names
+
+[ v3_req ]
+subjectAltName      = @alt_names
+
+[ alt_names ]
+DNS.1   = registry.local
+# Add more SANs if needed
+
+# ... rest of the config
